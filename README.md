@@ -7,7 +7,7 @@ Run with:
 If you don't know your UID and GID, you can quickly find that on a Linux system with the `id` command. The full command may look something like this:
 ` docker run -v --user 1000:1000 "$(pwd):/out" zeppelinsforever/livestream_dl_containerized:latest [URL] `
 
-If you are on a system that doesn't have this information (like Windows, for example), just fill in `1000` for the UID and GID.
+If you are on a system that doesn't have this information (like Windows, for example), the `--user [UID]:[GID]` section may be unnecessary, and can be removed.
 
 The image itself is at:
 https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized
