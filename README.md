@@ -17,4 +17,5 @@ A Script to make this process easier will be available soon-ish.
 ---
 
 ## To-Do:
+- Pass cookies file for membership streams.
 - Make script to interface with docker image. Clean up container after finished.
