@@ -3,9 +3,9 @@ A docker container and scripts for using livestream_dl conveniently!
 
 
 Run with:
-` sudo docker run -v --user [UID]:[GID] "$(pwd):/out" zeppelinsforever/livestream_dl_containerized:latest [URL] ` or ` docker run -v --user [UID]:[GID] "$(pwd):/out" zeppelinsforever/livestream_dl_containerized:latest [URL] ` depending on if you have a docker user set up.
+` sudo docker run -v "$(pwd):/out" --user [UID]:[GID] zeppelinsforever/livestream_dl_containerized:latest [URL] ` or ` docker run -v "$(pwd):/out" --user [UID]:[GID] zeppelinsforever/livestream_dl_containerized:latest [URL] ` depending on if you have a docker user set up.
 If you don't know your UID and GID, you can quickly find that on a Linux system with the `id` command. The full command may look something like this:
-` docker run -v --user 1000:1000 "$(pwd):/out" zeppelinsforever/livestream_dl_containerized:latest [URL] `
+` docker run -v "$(pwd):/out" --user 1000:1000 zeppelinsforever/livestream_dl_containerized:latest [URL] `
 
 If you are on a system that doesn't have this information (like Windows, for example), the `--user [UID]:[GID]` section may be unnecessary, and can be removed.
 
