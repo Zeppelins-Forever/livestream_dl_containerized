@@ -1,0 +1,32 @@
+FROM alpine
+
+RUN mkdir /out ; apk update ; apk add --no-cache python3 py3-pip deno wget unzip ffmpeg
+
+#COPY livestream_dl-main .
+RUN wget https://github.com/CanOfSocks/livestream_dl/archive/refs/heads/main.zip && mv main.zip livestream_dl-main.zip
+RUN unzip livestream_dl-main.zip && rm livestream_dl-main.zip
+
+ARG UID=10001
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    appuser
+RUN chown -R appuser /out /livestream_dl-main
+
+
+WORKDIR /livestream_dl-main
+COPY --chown=appuser run.sh /livestream_dl-main/
+RUN chmod +x /livestream_dl-main/run.sh
+
+
+RUN python3 -m venv myenv ; source myenv/bin/activate ; pip install --upgrade pip ; pip3 install yt-dlp httpx urllib3 ffmpeg ffprobe
+RUN source myenv/bin/activate ; sed -i "/if[[:space:]]\+fmt_stream\.get('targetDurationSec'):/,/^[[:space:]]*continue/s/^[[:space:]]*/&#/" "$(pip show yt-dlp | awk '/Location/ {print $2}')/yt_dlp/extractor/youtube/_video.py"
+#RUN chown -R appuser /myenv
+
+#USER appuser
+
+ENTRYPOINT ["/livestream_dl-main/run.sh"]
