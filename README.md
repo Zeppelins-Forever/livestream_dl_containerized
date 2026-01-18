@@ -7,7 +7,8 @@ Run with:
 If you don't know your UID and GID, you can quickly find that on a Linux system with the `id` command. The full command may look something like this:
 ` docker run -v "$(pwd):/out" --user 1000:1000 zeppelinsforever/livestream_dl_containerized:latest [URL] `
 
-If you are on a system that doesn't have this information (like Windows, for example), the `--user [UID]:[GID]` section may be unnecessary, and can be removed.
+If you are on a system that doesn't have this information or doesn't respect Unix file permissions (like Windows, for example), the `--user [UID]:[GID]` section may be unnecessary, and can be removed. Further testing on DOcker running in WSL on Windows is needed...
+All container operations run as root (as such, you shouldn't use this in any security-critical environment), and we run the container with the `--user` permissions so that file output is marked as being owned by yourself, rather than the "root" user - this could cause issues.
 
 The image itself is at:
 https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized
