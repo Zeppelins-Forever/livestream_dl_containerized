@@ -13,7 +13,9 @@ All container operations run as root (as such, you shouldn't use this in any sec
 The image itself is at:
 https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized
 
-A Script to make this process easier will be available soon-ish.
+If you are using the version tagged `:latest`, you may need to occasionally update the package to the newest version. You can do this by running `docker pull zeppelinsforever/livestream_dl-container:latest`.
+
+A Script to make all of these processes easier will be available soon-ish.
 
 ---
 
