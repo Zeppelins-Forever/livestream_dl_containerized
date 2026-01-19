@@ -8,6 +8,7 @@ Make sure Docker Engine is running on your machine (and that the user you're run
 ### Quirks:
 - If you want to pass cookies to the container, I recommend using `-v /full/path/to/my_cookies.txt:/cookies/cookies.txt` as an argument when directly launching the container via "docker run". Replace "/full/path/to/my_cookies.txt" with your actual (not relative) system path to your cookies file. The container has a folder to put it in (`/cookies`) and the above arguments will place it in there as `cookies.txt`. Also, pass the argument `--cookies /cookies/cookies.txt` after the container name, so the container knows where to find the mounted cookies file.
 - You currently cannot use `--output`, as this is relied upon for certain functions within the container itself. Functionality which lets you cusomize the output name, without adjusting where it's output to, may come later.
+- Note: If you are running these docker commands directly within Linux's `nohup` (i.e. `nohup docker run ... --resolution best [URL] &`), always exclude the `-it` command. Since nohup runs the command without interactivity (and streams the output to a "nohup.out" file by default) and in another process, you will not have the interacitvity that `-it` requires, and it will fail.
 
 Refer to https://github.com/CanOfSocks/livestream_dl?tab=readme-ov-file#modification-of-yt-dlp for a full list of commands.
 
@@ -22,12 +23,12 @@ Refer to https://github.com/CanOfSocks/livestream_dl?tab=readme-ov-file#modifica
 (Linux/MacOS)> Download video to current directory, using cookies - for accessing membership content:
 > `docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) -v /FULL/path/to/your_cookies.txt:/cookies/cookies.txt zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --cookies /cookies/cookies.txt --wait-for-video 60 --live-chat --resolution best [URL]`
 
-(Windows)> Download video to current directory, using cookies - for accessing membership content:
-> Not yet tested
+(Windows)> Download video to current directory, using cookies - for accessing membership content (UID and GID are arbitrary, since Windows doesn't use Unix-like permissions):
+> `docker run -it --rm -v "C:\full\system\path\to-folder:/out" -e MY_UID=1000 -e MY_GID=1000 -v C:\full\path\to\your_cookies.txt:/cookies/cookies.txt zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --cookies /cookies/cookies.txt --wait-for-video 60 --live-chat --resolution best [URL]`
 
 ## Required arguments:
 You MUST run your container with the following arguments:
-`docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) [image name] <arguments> [URL]`
+`docker run -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) [image name] <arguments> [URL]`
 
 ---
 
