@@ -4,7 +4,7 @@ A docker container and scripts for using livestream_dl (semi)conveniently!
 # Easiest Usage:
 Make sure Docker Engine is running on your machine (and that the user you're running as can directly run Docker containers, otherwise this may not work properly) and run `archive-helper.sh`. It will guide you through a set of "sensible defaults" for downloading a stream. (this is not done yet, but will be soon)
 
-## Running [image name] directly:
+## Running livestream_dl_containerized directly:
 ### Quirks:
 - If you want to pass cookies to the container, I recommend using `-v /full/path/to/my_cookies.txt:/cookies/cookies.txt` as an argument when directly launching the container via "docker run". Replace "/full/path/to/my_cookies.txt" with your actual (not relative) system path to your cookies file. The container has a folder to put it in (`/cookies`) and the above arguments will place it in there as `cookies.txt`. Also, pass the argument `--cookies /cookies/cookies.txt` after the container name, so the container knows where to find the mounted cookies file.
 - You currently cannot use `--output`, as this is relied upon for certain functions within the container itself. Functionality which lets you cusomize the output name, without adjusting where it's output to, may come later.
