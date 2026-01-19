@@ -1,14 +1,27 @@
 # livestream_dl_containerized
-A docker container and scripts for using livestream_dl conveniently!
+A docker container and scripts for using livestream_dl (semi)conveniently!
 
+# Easiest Usage:
+Make sure Docker Engine is running on your machine (and that the user you're running as can directly run Docker containers, otherwise this may not work properly) and run `archive-helper.sh`. It will guide you through a set of "sensible defaults" for downloading a stream. (this is not done yet, but will be soon)
 
-Run with:
-` sudo docker run -it --rm -v "$(pwd):/out" --user [UID]:[GID] zeppelinsforever/livestream_dl_containerized:latest [URL] ` or ` docker run -it --rm -v "$(pwd):/out" --user [UID]:[GID] zeppelinsforever/livestream_dl_containerized:latest [URL] ` depending on if you have a docker user set up. `-it` makes the container interactive, and `--rm` removes the container after being run. You wouldn't want a ton of containers hanging around, taking up space on your device, right?
-If you don't know your UID and GID, you can quickly find that on a Linux system with the `id` command. The full command may look something like this:
-` docker run  -it --rm -v "$(pwd):/out" --user 1000:1000 zeppelinsforever/livestream_dl_containerized:latest [URL] `
+## Running [image name] directly:
+### Quirks:
+- If you want to pass cookies to the container, I recommend using `-v /full/path/to/my_cookies.txt:/cookies/cookies.txt` as an argument when directly launching the container via "docker run". Replace "/full/path/to/my_cookies.txt" with your actual (not relative) system path to your cookies file. The container has a folder to put it in (`/cookies`) and the above arguments will place it in there as `cookies.txt`. Also, pass the argument `--cookies /cookies/cookies.txt` after the container name, so the container knows where to find the mounted cookies file.
+- You currently cannot use `--output`, as this is relied upon for certain functions within the container itself. Functionality which lets you cusomize the output name, without adjusting where it's output to, may come later.
 
-If you are on a system that doesn't have this information or doesn't respect Unix file permissions (like Windows, for example), the `--user [UID]:[GID]` section may be unnecessary, and can be removed. Further testing on DOcker running in WSL on Windows is needed...
-All container operations run as root (as such, you shouldn't use this in any security-critical environment), and we run the container with the `--user` permissions so that file output is marked as being owned by yourself, rather than the "root" user - this could cause issues.
+Refer to https://github.com/CanOfSocks/livestream_dl?tab=readme-ov-file#modification-of-yt-dlp for a full list of commands.
+
+### Recommended commands:
+
+> Download video to current directory: `docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --wait-for-video 60 --live-chat --resolution best [URL]`
+
+> Download video to current directory, using cookies (for accessing membership content): `docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) -v /FULL/path/to/your_cookies.txt:/cookies/cookies.txt zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --cookies /cookies/cookies.txt --wait-for-video 60 --live-chat --resolution best [URL]`
+
+## Required arguments:
+You MUST run your container with the following arguments:
+`docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) [image name] <arguments> [URL]`
+
+---
 
 The image itself is at:
 https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized
@@ -20,5 +33,5 @@ A Script to make all of these processes easier will be available soon-ish.
 ---
 
 ## To-Do:
-- Pass cookies file for membership streams.
-- Make script to interface with docker image. Clean up container after finished.
+- Add output name cusomization, without allowing user to change directory (as this would break container functionality)
+- Make script to interface with docker image.
