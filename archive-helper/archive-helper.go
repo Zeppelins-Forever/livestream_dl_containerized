@@ -22,6 +22,7 @@ type Config struct {
 
 var (
 	cookiePathFlag string
+	silentFlag     bool // [CHANGE 1] Added silent flag variable
 	appConfig      Config
 	// We determine these at runtime
 	needsSudo bool
@@ -49,6 +50,8 @@ func main() {
 	}
 
 	rootCmd.Flags().StringVar(&cookiePathFlag, "cookies", "", "Path to cookies.txt")
+	// [CHANGE 2] Register the silent flag
+	rootCmd.Flags().BoolVar(&silentFlag, "silent", false, "Run silently in background using nohup")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -109,7 +112,8 @@ func runApplicationLogic(cmd *cobra.Command, args []string) {
 		fmt.Println("Attempting to run with local version...")
 	}
 	// C. Execute Docker
-	if err := executeDockerCommand(finalURL, finalCookiePath); err != nil {
+	// [CHANGE 3] Pass the silentFlag to the execution function
+	if err := executeDockerCommand(finalURL, finalCookiePath, silentFlag); err != nil {
 		fmt.Printf("Execution failed: %v\n", err)
 		os.Exit(1)
 	}
@@ -140,7 +144,8 @@ func checkDocker() error {
 	return nil
 }
 
-func executeDockerCommand(url string, cookiePath string) error {
+// [CHANGE 4] Updated signature to accept silent bool
+func executeDockerCommand(url string, cookiePath string, silent bool) error {
 	// 1. Gather System Info
 	currentUser, _ := user.Current()
 	currentDir, _ := os.Getwd() // This is where we are running the app from
@@ -188,7 +193,7 @@ func executeDockerCommand(url string, cookiePath string) error {
 		"-e", fmt.Sprintf("MY_UID=%s", uid),
 		"-e", fmt.Sprintf("MY_GID=%s", gid),
 		"zeppelinsforever/livestream_dl_containerized:latest",
-		"--log-level", "DEBUG",
+		"--log-level", "INFO",
 		"--wait-for-video", "60",
 		"--live-chat",
 		"--resolution", "best",
@@ -204,24 +209,50 @@ func executeDockerCommand(url string, cookiePath string) error {
 
 	// 7. Execution
 	var finalCmd *exec.Cmd
-	if needsSudo {
-		finalCmd = exec.Command("sudo", cmdArgs...)
+
+	// [CHANGE 5] Logic split for Silent vs Interactive
+	if silent {
+		// Determine binary string
+		binary := "docker"
+		if needsSudo {
+			binary = "sudo"
+		}
+
+		// Escape arguments to be safe in the shell string
+		quotedArgs := make([]string, len(cmdArgs))
+		for i, arg := range cmdArgs {
+			quotedArgs[i] = fmt.Sprintf("%q", arg)
+		}
+
+		// Construct the full inner command
+		fullCmdStr := fmt.Sprintf("%s %s", binary, strings.Join(quotedArgs, " "))
+
+		// Construct the nohup shell command: nohup [cmd] > nohup.$(date +"%F").out 2>&1 &
+		// Note: %%F is the escape for %F in Go Sprintf
+		shellCmd := fmt.Sprintf("nohup %s > nohup.$(date +\"%%F\").out 2>&1 &", fullCmdStr)
+
+		fmt.Println("\n>> Launching Docker Container in Background (Silent Mode)...")
+		fmt.Printf("Command: %s\n", shellCmd)
+
+		// Run via sh -c
+		finalCmd = exec.Command("sh", "-c", shellCmd)
+		// No stdin/stdout attached implies silent operation.
 	} else {
-		finalCmd = exec.Command("docker", cmdArgs...)
-	}
+		// -- ORIGINAL INTERACTIVE MODE --
+		if needsSudo {
+			finalCmd = exec.Command("sudo", cmdArgs...)
+		} else {
+			finalCmd = exec.Command("docker", cmdArgs...)
+		}
 
-	finalCmd.Stdout = os.Stdout
-	finalCmd.Stderr = os.Stderr
-	finalCmd.Stdin = os.Stdin
+		finalCmd.Stdout = os.Stdout
+		finalCmd.Stderr = os.Stderr
+		finalCmd.Stdin = os.Stdin
 
-	fmt.Println("\n>> Launching Docker Container...")
-	// We manually format this print to look nicer for you, adding quotes for clarity
-	// strictly for display purposes.
-	displayCmd := finalCmd.String()
-	if strings.Contains(displayCmd, " ") {
-		// This is a simple visual aid; the actual execution is already safe.
+		fmt.Println("\n>> Launching Docker Container...")
+		displayCmd := finalCmd.String()
+		fmt.Printf("Command: %s\n\n", displayCmd)
 	}
-	fmt.Printf("Command: %s\n\n", displayCmd)
 
 	return finalCmd.Run()
 }
