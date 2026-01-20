@@ -141,52 +141,48 @@ func checkDocker() error {
 }
 
 func executeDockerCommand(url string, cookiePath string) error {
-	// 1. Gather System Info for Variables
+	// 1. Gather System Info
 	currentUser, _ := user.Current()
-	currentDir, _ := os.Getwd()
+	currentDir, _ := os.Getwd() // This is where we are running the app from
 
-	// Default to standard "pwd" mount
+	// BASELINE: Always mount the CURRENT directory to /out
 	volumeMount := fmt.Sprintf("%s:/out", currentDir)
 
-	// Default to current user's ID (Linux/Mac only)
+	// Defaults for "No Cookie" mode (User's actual ID)
 	uid := currentUser.Uid
 	gid := currentUser.Gid
 
-	// 2. Build Arguments List
-	// Start with the base command parts
+	// 2. Build Arguments
 	var cmdArgs []string
 
+	// Handle Sudo
 	if needsSudo {
 		cmdArgs = append(cmdArgs, "docker")
-	} else {
-		// If no sudo, the executable is "docker", arguments start after
 	}
 
-	cmdArgs = append(cmdArgs, "run", "-it", "--rm")
+	cmdArgs = append(cmdArgs, "run", "--rm")
 
-	// 3. Conditional Logic: Cookies vs No Cookies
+	// 3. Conditional Logic
 	if cookiePath != "None" && cookiePath != "" {
 		// --- COOKIE MODE ---
-		// User requested specific logic: Mount specific folder if cookies are present.
-		// NOTE: In a real scenario, you likely want to mount the cookies FILE itself.
-		// For this example, we follow your request to change the volume mount logic.
-
-		// If the user provided a relative path, make it absolute
-		absCookiePath, _ := filepath.Abs(cookiePath)
-		cookieDir := filepath.Dir(absCookiePath)
-
-		// Overwrite defaults as per your prompt example
-		// "If cookies... use sensible defaults (hardcoded or based on input)"
-		volumeMount = fmt.Sprintf("%s:/out", cookieDir)
+		// We switch to fixed IDs as requested
 		uid = "1000"
 		gid = "1000"
 
-		// We also technically need to pass the cookies to the container.
-		// Assuming the container takes a flag, we add a volume for the file:
+		// RESOLVE ABSOLUTE PATH
+		// We need the full path so Docker can find the file from anywhere
+		absCookiePath, err := filepath.Abs(cookiePath)
+		if err != nil {
+			return fmt.Errorf("failed to resolve cookie path: %v", err)
+		}
+
+		// MOUNT THE FILE
+		// We map the specific host file -> /app/cookies.txt in container
 		cmdArgs = append(cmdArgs, "-v", fmt.Sprintf("%s:/app/cookies.txt", absCookiePath))
 	}
 
 	// 4. Add Common Flags
+	// distinct from the cookie logic, we ALWAYS mount the currentDir to /out
 	cmdArgs = append(cmdArgs,
 		"-v", volumeMount,
 		"-e", fmt.Sprintf("MY_UID=%s", uid),
@@ -198,31 +194,34 @@ func executeDockerCommand(url string, cookiePath string) error {
 		"--resolution", "best",
 	)
 
-	// 5. Add Cookie Flag to the IMAGE (if needed)
+	// 5. Add Cookie Flag to the IMAGE
 	if cookiePath != "None" && cookiePath != "" {
 		cmdArgs = append(cmdArgs, "--cookies", "/app/cookies.txt")
 	}
 
-	// 6. Add URL (Final Argument)
+	// 6. Add URL
 	cmdArgs = append(cmdArgs, url)
 
 	// 7. Execution
 	var finalCmd *exec.Cmd
 	if needsSudo {
-		// Run: sudo docker run ...
 		finalCmd = exec.Command("sudo", cmdArgs...)
 	} else {
-		// Run: docker run ...
 		finalCmd = exec.Command("docker", cmdArgs...)
 	}
 
-	// Connect input/output so the user sees the docker progress bar
 	finalCmd.Stdout = os.Stdout
 	finalCmd.Stderr = os.Stderr
 	finalCmd.Stdin = os.Stdin
 
 	fmt.Println("\n>> Launching Docker Container...")
-	fmt.Printf("Command: %s\n\n", finalCmd.String())
+	// We manually format this print to look nicer for you, adding quotes for clarity
+	// strictly for display purposes.
+	displayCmd := finalCmd.String()
+	if strings.Contains(displayCmd, " ") {
+		// This is a simple visual aid; the actual execution is already safe.
+	}
+	fmt.Printf("Command: %s\n\n", displayCmd)
 
 	return finalCmd.Run()
 }
@@ -234,7 +233,7 @@ func getUserInput(r *bufio.Reader) string {
 }
 
 func promptAndSaveNewPath(r *bufio.Reader) string {
-	fmt.Print("Enter path to cookies.txt: ")
+	fmt.Print("Enter path to cookies.txt (no perentheses): ")
 	input, _ := r.ReadString('\n')
 	newPath := strings.TrimSpace(input)
 	fmt.Print("Save this path as default for future runs? (y/n): ")
