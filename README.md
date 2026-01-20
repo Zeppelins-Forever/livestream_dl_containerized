@@ -7,14 +7,14 @@ Make sure Docker Engine is running on your machine, then download [archive-helpe
 Archive-helper checks if Docker is installed and running, pulls the newest version of [zeppelinsforever/livestream_dl_containerized](https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized), elevates the docker call if needed (i.e. if your user must run docker containers as sudo), and runs the container with commansd similar to those in the "Recommended Commands" section below.
 
 It can be ran the following ways:
-- `archive-helper [--silent] [--cookies /full/path/to/cookies.txt] [URL]`
+- `archive-helper [--silent] [--cookies "/full/path/to/cookies.txt"] [URL]`
 - `archive-helper [URL]`
 - `archive-helper`
 
 | Option | Configuration |
 | --- | --- |
 | [--silent] | Redirects Stdout and Stderr (all terminal output) to a file called nogup.{date}.out |
-| [--cookies /path/to/cookies.txt] | Accepts a cookies file so you can download a members-only stream. If you need help exporting cookies from your browser, I recommend downloading [this browser extension](https://github.com/rotemdan/ExportCookies), logging into YouTube in an incognito tab (to avoid cookie reuse), and exporting them via the extension. <b>Important:</b> Make sure you use the FULL system path, no user-soecific path or relative path. |
+| [--cookies "/path/to/cookies.txt"] | Accepts a cookies file so you can download a members-only stream. If you need help exporting cookies from your browser, I recommend downloading [this browser extension](https://github.com/rotemdan/ExportCookies), logging into YouTube in an incognito tab (to avoid cookie reuse), and exporting them via the extension. <b>Important:</b> Make sure you use the FULL system path, no user-specific path or relative path. |
 | [URL | Just paste the URL of the livestream you want to download. |
 
 
