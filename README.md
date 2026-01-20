@@ -16,7 +16,7 @@ It can be ran the following ways:
 | --- | --- |
 | [--silent] | Redirects Stdout and Stderr (all terminal output) to a file called nogup.{date}.out |
 | [--cookies "/path/to/cookies.txt"] | Accepts a cookies file so you can download a members-only stream. If you need help exporting cookies from your browser, I recommend downloading [this browser extension](https://github.com/rotemdan/ExportCookies), logging into YouTube in an incognito tab (to avoid cookie reuse), and exporting them via the extension. <b>Important:</b> Make sure you use the FULL system path, no user-specific path or relative path. |
-| [URL | Just paste the URL of the livestream you want to download. |
+| [URL] | Just paste the URL of the livestream you want to download. |
 
 
 # Running livestream_dl_containerized directly:
