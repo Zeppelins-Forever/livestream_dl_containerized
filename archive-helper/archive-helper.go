@@ -103,7 +103,11 @@ func runApplicationLogic(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-
+	// NEW STEP: Ensure the image is up to date
+	if err := pullDockerImage(); err != nil {
+		fmt.Printf("Warning: Could not pull latest image: %v\n", err)
+		fmt.Println("Attempting to run with local version...")
+	}
 	// C. Execute Docker
 	if err := executeDockerCommand(finalURL, finalCookiePath); err != nil {
 		fmt.Printf("Execution failed: %v\n", err)
@@ -238,6 +242,25 @@ func promptAndSaveNewPath(r *bufio.Reader) string {
 		saveEnvVar("LIVESTREAM_DL_CONTAINERIZED_COOKIES", newPath)
 	}
 	return newPath
+}
+
+func pullDockerImage() error {
+	fmt.Println(">> Checking for updates for zeppelinsforever/livestream_dl_containerized...")
+
+	imageName := "zeppelinsforever/livestream_dl_containerized:latest"
+	var pullCmd *exec.Cmd
+
+	if needsSudo {
+		pullCmd = exec.Command("sudo", "docker", "pull", imageName)
+	} else {
+		pullCmd = exec.Command("docker", "pull", imageName)
+	}
+
+	// We connect Stdout so the user sees the "Downloading layer..." progress
+	pullCmd.Stdout = os.Stdout
+	pullCmd.Stderr = os.Stderr
+
+	return pullCmd.Run()
 }
 
 func saveEnvVar(key, value string) {
