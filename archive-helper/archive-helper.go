@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time" // [ADDED] Needed for generating the date string on Windows
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -22,7 +23,7 @@ type Config struct {
 
 var (
 	cookiePathFlag string
-	silentFlag     bool // [CHANGE 1] Added silent flag variable
+	silentFlag     bool
 	appConfig      Config
 	// We determine these at runtime
 	needsSudo bool
@@ -50,8 +51,7 @@ func main() {
 	}
 
 	rootCmd.Flags().StringVar(&cookiePathFlag, "cookies", "", "Path to cookies.txt")
-	// [CHANGE 2] Register the silent flag
-	rootCmd.Flags().BoolVar(&silentFlag, "silent", false, "Run silently in background using nohup")
+	rootCmd.Flags().BoolVar(&silentFlag, "silent", false, "Run silently in background")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -75,7 +75,7 @@ func runApplicationLogic(cmd *cobra.Command, args []string) {
 		finalURL = strings.TrimSpace(input)
 	}
 
-	// B. Cookie Logic (Preserved from previous step)
+	// B. Cookie Logic
 	if cmd.Flags().Changed("cookies") {
 		finalCookiePath = cookiePathFlag
 		if appConfig.CookiesPath != "" && finalCookiePath != appConfig.CookiesPath {
@@ -106,13 +106,12 @@ func runApplicationLogic(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-	// NEW STEP: Ensure the image is up to date
+	// Ensure the image is up to date
 	if err := pullDockerImage(); err != nil {
 		fmt.Printf("Warning: Could not pull latest image: %v\n", err)
 		fmt.Println("Attempting to run with local version...")
 	}
 	// C. Execute Docker
-	// [CHANGE 3] Pass the silentFlag to the execution function
 	if err := executeDockerCommand(finalURL, finalCookiePath, silentFlag); err != nil {
 		fmt.Printf("Execution failed: %v\n", err)
 		os.Exit(1)
@@ -122,18 +121,13 @@ func runApplicationLogic(cmd *cobra.Command, args []string) {
 // --- SYSTEM OPERATIONS ---
 
 func checkDocker() error {
-	// 1. Check if binary exists
 	_, err := exec.LookPath("docker")
 	if err != nil {
 		return fmt.Errorf("docker binary not found in PATH")
 	}
 
-	// 2. Check if daemon is responsive (and if we need sudo)
-	// We run 'docker info'. If it works, great.
-	// If it fails with "permission denied", we need sudo.
 	cmd := exec.Command("docker", "info")
 	if err := cmd.Run(); err != nil {
-		// Simple heuristic: If it failed, assume it's a permission issue on Linux
 		if runtime.GOOS == "linux" {
 			fmt.Println(">> Docker requires privileges. Enabling sudo mode...")
 			needsSudo = true
@@ -144,23 +138,21 @@ func checkDocker() error {
 	return nil
 }
 
-// [CHANGE 4] Updated signature to accept silent bool
 func executeDockerCommand(url string, cookiePath string, silent bool) error {
 	// 1. Gather System Info
 	currentUser, _ := user.Current()
-	currentDir, _ := os.Getwd() // This is where we are running the app from
+	currentDir, _ := os.Getwd()
 
 	// BASELINE: Always mount the CURRENT directory to /out
 	volumeMount := fmt.Sprintf("%s:/out", currentDir)
 
-	// Defaults for "No Cookie" mode (User's actual ID)
+	// Defaults for "No Cookie" mode
 	uid := currentUser.Uid
 	gid := currentUser.Gid
 
 	// 2. Build Arguments
 	var cmdArgs []string
 
-	// Handle Sudo
 	if needsSudo {
 		cmdArgs = append(cmdArgs, "docker")
 	}
@@ -169,33 +161,34 @@ func executeDockerCommand(url string, cookiePath string, silent bool) error {
 
 	// 3. Conditional Logic
 	if cookiePath != "None" && cookiePath != "" {
-		// --- COOKIE MODE ---
-		// We switch to fixed IDs as requested
 		uid = "1000"
 		gid = "1000"
 
-		// RESOLVE ABSOLUTE PATH
-		// We need the full path so Docker can find the file from anywhere
 		absCookiePath, err := filepath.Abs(cookiePath)
 		if err != nil {
 			return fmt.Errorf("failed to resolve cookie path: %v", err)
 		}
-
-		// MOUNT THE FILE
-		// We map the specific host file -> /app/cookies.txt in container
 		cmdArgs = append(cmdArgs, "-v", fmt.Sprintf("%s:/app/cookies.txt", absCookiePath))
 	}
 
 	// 4. Add Common Flags
-	// distinct from the cookie logic, we ALWAYS mount the currentDir to /out
 	cmdArgs = append(cmdArgs,
 		"-v", volumeMount,
-		"-e", fmt.Sprintf("MY_UID=%s", uid),
-		"-e", fmt.Sprintf("MY_GID=%s", gid),
+	)
+
+	// [CHANGE] Only append UID/GID on non-Windows systems
+	if runtime.GOOS != "windows" {
+		cmdArgs = append(cmdArgs,
+			"-e", fmt.Sprintf("MY_UID=%s", uid),
+			"-e", fmt.Sprintf("MY_GID=%s", gid),
+		)
+	}
+
+	cmdArgs = append(cmdArgs,
 		"zeppelinsforever/livestream_dl_containerized:latest",
 		"--log-level", "INFO",
 		"--wait-for-video", "60",
-		"--write-thumbnail", 
+		"--write-thumbnail",
 		"--embed-thumbnail",
 		"--live-chat",
 		"--resolution", "best",
@@ -212,35 +205,58 @@ func executeDockerCommand(url string, cookiePath string, silent bool) error {
 	// 7. Execution
 	var finalCmd *exec.Cmd
 
-	// [CHANGE 5] Logic split for Silent vs Interactive
 	if silent {
-		// Determine binary string
-		binary := "docker"
-		if needsSudo {
-			binary = "sudo"
+		// [CHANGE] Branching Logic for Windows vs Linux Silent Mode
+		if runtime.GOOS == "windows" {
+			// --- WINDOWS SILENT MODE ---
+			// Windows does not have "nohup". We must manually create the file and direct output.
+
+			// 1. Create the log file name: nohup.YYYY-MM-DD.out
+			dateStr := time.Now().Format("2006-01-02")
+			fileName := fmt.Sprintf("nohup.%s.out", dateStr)
+
+			// 2. Open/Create the file
+			outfile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+			if err != nil {
+				return fmt.Errorf("failed to create log file for silent mode: %v", err)
+			}
+			// Note: We deliberately do not defer outfile.Close() here because we want
+			// it to stay open for the duration of the child process if possible,
+			// though Go's exec.Start handles file descriptor inheritance.
+
+			// 3. Setup the command
+			finalCmd = exec.Command("docker", cmdArgs...)
+			finalCmd.Stdout = outfile
+			finalCmd.Stderr = outfile
+
+			fmt.Println("\n>> Launching Docker Container in Background (Windows Mode)...")
+			fmt.Printf("Logs redirected to: %s\n", fileName)
+
+			// 4. Start asynchronously (detach)
+			return finalCmd.Start()
+		} else {
+			// --- LINUX/MAC SILENT MODE (Original Logic) ---
+			binary := "docker"
+			if needsSudo {
+				binary = "sudo"
+			}
+
+			quotedArgs := make([]string, len(cmdArgs))
+			for i, arg := range cmdArgs {
+				quotedArgs[i] = fmt.Sprintf("%q", arg)
+			}
+
+			fullCmdStr := fmt.Sprintf("%s %s", binary, strings.Join(quotedArgs, " "))
+			shellCmd := fmt.Sprintf("nohup %s > nohup.$(date +\"%%F\").out 2>&1 &", fullCmdStr)
+
+			fmt.Println("\n>> Launching Docker Container in Background (Silent Mode)...")
+			fmt.Printf("Command: %s\n", shellCmd)
+
+			finalCmd = exec.Command("sh", "-c", shellCmd)
+			return finalCmd.Run()
 		}
-
-		// Escape arguments to be safe in the shell string
-		quotedArgs := make([]string, len(cmdArgs))
-		for i, arg := range cmdArgs {
-			quotedArgs[i] = fmt.Sprintf("%q", arg)
-		}
-
-		// Construct the full inner command
-		fullCmdStr := fmt.Sprintf("%s %s", binary, strings.Join(quotedArgs, " "))
-
-		// Construct the nohup shell command: nohup [cmd] > nohup.$(date +"%F").out 2>&1 &
-		// Note: %%F is the escape for %F in Go Sprintf
-		shellCmd := fmt.Sprintf("nohup %s > nohup.$(date +\"%%F\").out 2>&1 &", fullCmdStr)
-
-		fmt.Println("\n>> Launching Docker Container in Background (Silent Mode)...")
-		fmt.Printf("Command: %s\n", shellCmd)
-
-		// Run via sh -c
-		finalCmd = exec.Command("sh", "-c", shellCmd)
-		// No stdin/stdout attached implies silent operation.
 	} else {
-		// -- ORIGINAL INTERACTIVE MODE --
+		// -- INTERACTIVE MODE --
 		if needsSudo {
 			finalCmd = exec.Command("sudo", cmdArgs...)
 		} else {
@@ -254,12 +270,13 @@ func executeDockerCommand(url string, cookiePath string, silent bool) error {
 		fmt.Println("\n>> Launching Docker Container...")
 		displayCmd := finalCmd.String()
 		fmt.Printf("Command: %s\n\n", displayCmd)
-	}
 
-	return finalCmd.Run()
+		return finalCmd.Run()
+	}
 }
 
-// --- HELPERS (Same as before) ---
+// --- HELPERS ---
+
 func getUserInput(r *bufio.Reader) string {
 	input, _ := r.ReadString('\n')
 	return strings.TrimSpace(strings.ToLower(input))
@@ -288,7 +305,6 @@ func pullDockerImage() error {
 		pullCmd = exec.Command("docker", "pull", imageName)
 	}
 
-	// We connect Stdout so the user sees the "Downloading layer..." progress
 	pullCmd.Stdout = os.Stdout
 	pullCmd.Stderr = os.Stderr
 
@@ -296,8 +312,6 @@ func pullDockerImage() error {
 }
 
 func saveEnvVar(key, value string) {
-	// (Use the "Search and Replace" version from the previous step here)
-	// Abbreviated for space in this view, but include the full logic.
 	envFile := ".env"
 	newEntry := fmt.Sprintf("%s=%s", key, value)
 	input, _ := os.ReadFile(envFile)
