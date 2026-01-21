@@ -33,14 +33,14 @@ Refer to https://github.com/CanOfSocks/livestream_dl?tab=readme-ov-file#modifica
 (Linux/MacOS)> Download video to current directory:
 > `docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --wait-for-video 60 --write-thumbnail --embed-thumbnail --live-chat --resolution best [URL]`
 
-(Windows)> Download video to current directory (UID and GID are arbitrary, since Windows doesn't use Unix-like permissions):
-> `docker run -it --rm -v "C:\full\system\path\to-folder:/out" -e MY_UID=1000 -e MY_GID=1000 zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --wait-for-video 60 --write-thumbnail --embed-thumbnail --live-chat --resolution best [URL]`
+(Windows)> Download video to current directory (UID and GID are unneeded, since Windows doesn't use Unix-like permissions, and container auto-assigns it to 1000:1000 by default):
+> `docker run -it --rm -v "C:\full\system\path\to-folder:/out" zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --wait-for-video 60 --write-thumbnail --embed-thumbnail --live-chat --resolution best [URL]`
 
 (Linux/MacOS)> Download video to current directory, using cookies - for accessing membership content:
 > `docker run -it --rm -v "$(pwd):/out" -e MY_UID=$(id -u) -e MY_GID=$(id -g) -v /FULL/path/to/your_cookies.txt:/cookies/cookies.txt zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --cookies /cookies/cookies.txt --wait-for-video 60 --write-thumbnail --embed-thumbnail --live-chat --resolution best [URL]`
 
-(Windows)> Download video to current directory, using cookies - for accessing membership content (UID and GID are arbitrary, since Windows doesn't use Unix-like permissions):
-> `docker run -it --rm -v "C:\full\system\path\to-folder:/out" -e MY_UID=1000 -e MY_GID=1000 -v C:\full\path\to\your_cookies.txt:/cookies/cookies.txt zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --cookies /cookies/cookies.txt --wait-for-video 60 --write-thumbnail --embed-thumbnail --live-chat --resolution best [URL]`
+(Windows)> Download video to current directory, using cookies - for accessing membership content (UID and GID are arbitrary, since Windows doesn't use Unix-like permissions, and container auto-assigns it to 1000:1000 by default):
+> `docker run -it --rm -v "C:\full\system\path\to-folder:/out" -v C:\full\path\to\your_cookies.txt:/cookies/cookies.txt zeppelinsforever/livestream_dl_containerized:latest --log-level DEBUG --cookies /cookies/cookies.txt --wait-for-video 60 --write-thumbnail --embed-thumbnail --live-chat --resolution best [URL]`
 
 ## Required Arguments:
 You MUST run your container with the following arguments:
