@@ -6,7 +6,7 @@ echo
 # INFO Builds - change the
 GOOS=linux GOARCH=amd64 go build -o Releases/archive-helper-INFO-Linux-x64
 GOOS=linux GOARCH=arm64 go build -o Releases/archive-helper-INFO-Linux-ARM64
-GOOS=windows GOARCH=amd64 go build -o Releases/archive-helper-INFO-Windows-x64
+GOOS=windows GOARCH=amd64 go build -o Releases/archive-helper-INFO-Windows-x64.exe
 GOOS=windows GOARCH=arm64 go build -o Releases/archive-helper-INFO-Windows-ARM64.exe
 GOOS=darwin GOARCH=arm64 go build -o Releases/archive-helper-INFO-MacOS-AppleSilicon
 
@@ -15,6 +15,6 @@ echo
 # DEBUG Builds
 GOOS=linux GOARCH=amd64 go build -o Releases/archive-helper-DEBUG-Linux-x64
 GOOS=linux GOARCH=arm64 go build -o Releases/archive-helper-DEBUG-Linux-ARM64
-GOOS=windows GOARCH=amd64 go build -o Releases/archive-helper-DEBUG-Windows-x64
+GOOS=windows GOARCH=amd64 go build -o Releases/archive-helper-DEBUG-Windows-x64.exe
 GOOS=windows GOARCH=arm64 go build -o Releases/archive-helper-DEBUG-Windows-ARM64.exe
 GOOS=darwin GOARCH=arm64 go build -o Releases/archive-helper-DEBUG-MacOS-AppleSilicon
