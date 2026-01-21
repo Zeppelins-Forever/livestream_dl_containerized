@@ -1,0 +1,26 @@
+#Couldn't use only Python3 as a base, due to trouble with file accesses and DB writes. Needs more research.
+FROM alpine
+
+# FFMPEG needs to be installed on system. I'm unsure if it needs to also be in venv, need to look into this further.
+RUN mkdir /temp /out /cookies ; apk update ; apk add --no-cache python3 py3-pip deno wget unzip ffmpeg
+
+# The following commands download the newest livestream_dl version to be used, and unzips them. 
+# Previously, I just downloaded it manually and used "COPY livestream_dl-main ." - if needed, you can use that instead.
+RUN wget https://github.com/CanOfSocks/livestream_dl/archive/refs/heads/main.zip && mv main.zip livestream_dl-main.zip
+RUN unzip livestream_dl-main.zip && rm livestream_dl-main.zip
+
+# Set work dir and import run.sh to be used later.
+WORKDIR /livestream_dl-main
+COPY run.sh /livestream_dl-main/
+RUN chmod +x /livestream_dl-main/run.sh
+
+# Create Python virtual environment (venv) to install pip packages into. Necessary due to Python3 being managed by 
+# the Alpine package manager. As such, commands using these packages must be launched from within the venv as well.
+RUN python3 -m venv myenv ; source myenv/bin/activate ; pip install --upgrade pip ; pip3 install yt-dlp yt-dlp-ejs httpx urllib3 ffmpeg ffprobe chat-downloader
+
+# This regex modifies yt-dlp as needed by livestream_dl. May have to do this differently in the future, if the regex no longer works. 
+# Perhaps a manual COPY of a manually modified version of yt-dlp.
+RUN source myenv/bin/activate ; sed -i "/if[[:space:]]\+fmt_stream\.get('targetDurationSec'):/,/^[[:space:]]*continue/s/^[[:space:]]*/&#/" "$(pip show yt-dlp | awk '/Location/ {print $2}')/yt_dlp/extractor/youtube/_video.py"
+
+# Launches run.sh as the entrypoint, taking the user URL as an argument.
+ENTRYPOINT ["/livestream_dl-main/run.sh"]
