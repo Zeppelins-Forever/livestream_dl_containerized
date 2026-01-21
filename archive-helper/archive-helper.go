@@ -195,6 +195,8 @@ func executeDockerCommand(url string, cookiePath string, silent bool) error {
 		"zeppelinsforever/livestream_dl_containerized:latest",
 		"--log-level", "INFO",
 		"--wait-for-video", "60",
+		"--write-thumbnail", 
+		"--embed-thumbnail",
 		"--live-chat",
 		"--resolution", "best",
 	)
