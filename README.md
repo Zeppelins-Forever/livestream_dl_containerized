@@ -1,6 +1,6 @@
 # livestream_dl_containerized
 A docker container and scripts for using CanOfSocks's [livestream_dl](https://github.com/CanOfSocks/livestream_dl) (semi)conveniently! All you need is Docker!
-This is a tool to help download actively running YouTube livestreams
+This is a tool to help download actively running YouTube livestreams.
 
 # Easiest Usage (optional):
 Make sure Docker Engine is running on your machine, then download [archive-helper](https://github.com/Zeppelins-Forever/livestream_dl_containerized/releases) (and optionally add it to your PATH) and run `archive-helper` (Linux/MacOS) or `archive-helper.exe` (Windows) in the terminal. It will run a set of "sensible defaults" for downloading a stream. It will ask you for a URL and the full path to a cookies file (only use cookies if you are downloading membership content).
@@ -21,9 +21,9 @@ Example commands:
 
 # Running livestream_dl_containerized directly:
 ### Quirks:
-- If you want to pass cookies to the container, I recommend using `-v /full/path/to/my_cookies.txt:/cookies/cookies.txt` as an argument when directly launching the container via "docker run". Replace "/full/path/to/my_cookies.txt" with your actual (not relative) system path to your cookies file. The container has a folder to put it in (`/cookies`) and the above arguments will place it in there as `cookies.txt`. Also, pass the argument `--cookies /cookies/cookies.txt` after the container name, so the container knows where to find the mounted cookies file within the container.
-- You currently cannot use `--output`, as this is relied upon for certain functions within the container itself (well, you can use it, but it will break stuff). Functionality which lets you customize the output name, without adjusting where it's output to, may come later. For instance, for the container to work properly with varying permissions on different systems, the intermediary files are written to a directory inside the container, and are moved out when done.
-- Note: If you are running these docker commands directly within Linux's `nohup` (i.e. `nohup docker run ... --resolution best [URL] &`), always exclude the `-it` command. Since nohup runs the command without interactivity (and streams the output to a "nohup.out" file by default) and in another process, you will not have the interacitvity that `-it` requires, and it will fail.
+- If you want to pass cookies to the container, I recommend using `-v /full/path/to/my_cookies.txt:/cookies/cookies.txt` as an argument when directly launching the container via "docker run". Replace "/full/path/to/my_cookies.txt" with your actual (not relative) system path to your cookies file. The container has a folder to put it in (`/cookies/`) and the above arguments will place it in there as `cookies.txt`. Also, pass the argument `--cookies /cookies/cookies.txt` after the container name, so the container knows where to find the mounted cookies file within the container.
+- By default livestream_dl_containerized outputs its files to the directory it's run in, with the format `[%(upload_date)s] %(title)s (%(id)s)` (the file extension is added automatically). To use the `--output` command, you **MUST** prepend your file path with `/out/`. For example, `--output /out/path-on-your-system/filename` or `--output /out/filename`. The `/out/` section is NECESSARY, because the container is designed to be run with your current directory (or whichever directory you want to output to) mounted to `/out` via the `v "$(pwd):/out"` part of the run command (feel free to replace `$(pwd)` with the full system file path to your desired output directory). If you exclude `/out/` from your output path, your file may be created _inside_ the docker container, which is not helpful. However, I advise avoiding this command if you can avoid it, since it's easy to forget the `/out` directory.
+- Note: If you are running these docker commands directly within Linux's `nohup` (i.e. `nohup docker run ... --resolution best [URL] &`) or any other way in which you cannot directly interact with it via TTY, always exclude the `-it` command. Since nohup runs the command without interactivity (and streams the output to a "nohup.out" file by default) and in another process, you will not have the interacitvity that `-it` requires, and it will fail.
 Otherwise, it runs almost exactly the same as traditional livestream_dl.
 
 Refer to https://github.com/CanOfSocks/livestream_dl?tab=readme-ov-file#modification-of-yt-dlp for a full list of commands.
@@ -53,7 +53,3 @@ The image itself is at:
 https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized
 
 If you are using the version tagged `:latest`, you may need to occasionally update the package to the newest version. You can do this by running `docker pull zeppelinsforever/livestream_dl-containerized:latest`.
-
-## To-Do:
-- Add output name customization, without allowing user to change directory (as this would break container functionality)
-- Make script to interface with docker image.
