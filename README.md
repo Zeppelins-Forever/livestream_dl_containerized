@@ -1,9 +1,9 @@
 # livestream_dl_containerized
-A docker container and scripts for using CanOfSocks's [livestream_dl](https://github.com/CanOfSocks/livestream_dl) (semi)conveniently! All you need is Docker!
-This is a tool to help download actively running YouTube livestreams.
+A docker container and tools for using CanOfSocks's [livestream_dl](https://github.com/CanOfSocks/livestream_dl) (semi)conveniently! All you need is Docker!
+This is a tool to help download actively running YouTube livestreams. If you want to download a finished video, use [yt-dlp](https://github.com/yt-dlp/yt-dlp) instead.
 
 # Easiest Usage (optional):
-Make sure Docker Engine is running on your machine, then download [archive-helper](https://github.com/Zeppelins-Forever/livestream_dl_containerized/releases) (and optionally add it to your PATH) and run `archive-helper` (Linux/MacOS) or `archive-helper.exe` (Windows) in the terminal. It will run a set of "sensible defaults" for downloading a stream. It will ask you for a URL and the full path to a cookies file (only use cookies if you are downloading membership content).
+Make sure Docker Engine is running on your machine, then download [archive-helper](https://github.com/Zeppelins-Forever/livestream_dl_containerized/releases) (and optionally add it to your PATH) and run `archive-helper` (Linux/MacOS) or `archive-helper.exe` (Windows) in the terminal (or whatever the name is for your particular release, feel free to change it). It will run a set of "sensible defaults" for downloading a stream. It will ask you for a URL and the full path to a cookies file (only use cookies if you are downloading membership content).
 
 Archive-helper checks if Docker is installed and running, pulls the newest version of [zeppelinsforever/livestream_dl_containerized](https://hub.docker.com/r/zeppelinsforever/livestream_dl_containerized), elevates the docker call if needed (i.e. if your user must run docker containers as sudo), and runs the container with commands similar to those in the "Recommended Commands" section below.
 
