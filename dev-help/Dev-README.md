@@ -4,8 +4,8 @@
 ### Push to Docker Hub via:
 ```
 docker buildx build --no-cache --push \
-            --platform linux/arm64/v8,linux/amd64 \
-            --tag zeppelinsforever/livestream_dl_containerized:0.0.8 \
+            --platform linux/amd64 \
+            --tag zeppelinsforever/livestream_dl_containerized:0.0.11 \
             --tag zeppelinsforever/livestream_dl_containerized:latest .
 ```
 ### Deno does not support 32bit ARM architectures or RISC-V in Alpine's repos, and thus cannot build to other architectures currently.
