@@ -3,7 +3,7 @@
 
 ### Push to Docker Hub via:
 ```
-docker buildx build --push \
+docker buildx build --no-cache --push \
             --platform linux/arm64/v8,linux/amd64 \
             --tag zeppelinsforever/livestream_dl_containerized:0.0.8 \
             --tag zeppelinsforever/livestream_dl_containerized:latest .
