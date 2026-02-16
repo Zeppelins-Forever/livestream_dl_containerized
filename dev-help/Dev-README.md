@@ -5,10 +5,10 @@
 ```
 docker buildx build --no-cache --push \
             --platform linux/amd64 \
-            --tag zeppelinsforever/livestream_dl_containerized:0.0.11 \
+            --tag zeppelinsforever/livestream_dl_containerized:0.0.13 \
             --tag zeppelinsforever/livestream_dl_containerized:latest .
 ```
-### Deno does not support 32bit ARM architectures or RISC-V in Alpine's repos, and thus cannot build to other architectures currently.
+### Due to issues with APK tool on Alpine ARM64 builds, I am not currently building for ARM. I will once it is fixed.
 Check https://docs.docker.com/build/building/multi-platform/ for tools needed to release multiple architectures from one device.
 Run ` docker run --privileged --rm tonistiigi/binfmt --install all ` to install Docker's QEMU tools for multi-arch builds.
 
